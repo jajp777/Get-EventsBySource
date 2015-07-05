@@ -18,24 +18,23 @@
 	.PARAMETER MessageCharsAmount
 	
      
-  .EXAMPLE
-   Get-EventsBySource
+    .EXAMPLE
+    Get-EventsBySource
          
-  .LINK
-    https://github.com/it-praktyk/Remove-DoubledSIPAddresses
+    .LINK
+    https://github.com/it-praktyk/Get-EvenstBySource
     
     .LINK
     https://www.linkedin.com/in/sciesinskiwojciech
           
     .NOTES
-    AUTHOR: Wojciech Sciesinski, wojciech[at]sciesinski[dot]net
-    KEYWORDS: PowerShell, Exchange, SIPAddresses, ProxyAddresses, Lync, migration
    
-   VERSION HISTORY
-   AUTHOR: Wojciech Sciesinski, wojciech.sciesinski@atos.net
-   KEYWORDS: Windows, Event logs
-   VERSION HISTORY
-   0.3.1 - 2015-07-03 - Support for time span corrected, the first version published on GitHub
+    AUTHOR: Wojciech Sciesinski, wojciech.sciesinski@atos.net
+    KEYWORDS: Windows, Event logs
+    VERSION HISTORY
+    0.3.1 - 2015-07-03 - Support for time span corrected, the first version published on GitHub
+    0.3.2 - 2015-07-05 - Help updated, function corrected
+    
 
     TODO
     - help update needed
@@ -97,8 +96,6 @@ param(
 
 BEGIN {
 
-	Set-StrictMode -Version 2
-
     $Results=@()
 
 }
@@ -111,7 +108,7 @@ PROCESS {
 
             Write-Verbose -Message "Checking logs on the server $ComputerName"
             
-            If ($StartTime -or $EndTime) {
+            If ($StartTime -ne $null -or $EndTime -ne $null) {
                 
                 If ($StartTime -and $EndTime) {
                     
@@ -131,31 +128,32 @@ PROCESS {
                 
             }
             
-            elseif ($ForLastTimeSpan -or $ForLastTimeSpan) {
+            elseif ($ForLastTimeSpan -ne $null -or $ForLastTimeSpan -ne $null) {
                 
-                $StartTime = Get-Date
+                $EndTime = Get-Date
                 
                 switch ($ForLastTimeUnit) {
                     "minutes" {
                         
-                        $EndTime = $StartTime.AddMinutes($ForLastTimeSpan)
+                        $StartTime = $EndTime.AddMinutes(-$ForLastTimeSpan)
                         
                     }
                     "hours" {
                         
-                        $EndTime = $StartTime.AddHours($ForLastTimeSpan)
+                        $StartTime = $EndTime.AddHours(-$ForLastTimeSpan)
                         
                     }
                     "days" {
                         
-                        $EndTime = $StartTime.AddDays($ForLastTimeSpan)
+                        $StartTime = $EndTime.AddDays(-$ForLastTimeSpan)
                         
                     }
                     
                 }
                 
                 [Array]$FilterHashTable = @{ "Logname" = $LogName; "Id" = $EventID; "ProviderName" = $ProviderName; "StartTime" = $StartTime; "EndTime" = $EndTime }
-                
+            
+            
             }
             
             Else {
@@ -164,9 +162,7 @@ PROCESS {
                 
             }
             
-            $Events = $(Get-WinEvent -ComputerName $ComputerName -FilterHashtable $FilterHashTable -ErrorAction SilentlyContinue | Select-Object -Property MachineName,Providername,ID,TimeCreated,Message)
-			
-
+            $Events = $(Get-WinEvent -ComputerName $ComputerName -FilterHashtable $FilterHashTable -ErrorAction 'SilentlyContinue' | Select-Object -Property MachineName,Providername,ID,TimeCreated,Message)
 
         }
 
@@ -179,15 +175,18 @@ PROCESS {
 		}
 
         Finally {
-		
 
-			If ( $SkipServer ) {
 
-				$Found = $( $Events | Measure-Object).Count	
+			If ( -not $SkipServer ) {
+            
 
-				If ( $Found -ne 0 ) {
+				$Found = $( $Events | Measure-Object).Count
+                
+                If ($Found -ne 0) {
+                    
+                    [String]$MessageText = "For the computer $ComputerName events $Found found"
 
-					Write-Verbose -Message "For the server $_ $Found found" 
+					Write-Verbose -Message $MessageText
 
 					$Events | ForEach  { 
 	
