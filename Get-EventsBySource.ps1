@@ -1,7 +1,10 @@
 ﻿Function Get-EventsBySource {
 <#
 	.SYNOPSIS
-	Function intended for remote gathering events data 
+	Function intended for remote gathering events data
+    
+    .DESCRIPTION
+    Function intended to gather data from Windows events logs - Get-WinEvent is used
   
 	.PARAMETER ComputerName
    
@@ -10,14 +13,21 @@
 	.PARAMETER ProviderName
 	
 	.PARAMETER EventID
+    
+    .PARAMETER StartTime
+    
+    .PARAMETER EndTime
+    
+    .PARAMETER ForLastTimeSpan
+    
+    .PARAMETER ForLastTimeUnit
 	
 	.PARAMETER ConcatenateMessageLines
 	
 	.PARAMETER ConcatenatedLinesSeparator
 	
 	.PARAMETER MessageCharsAmount
-	
-     
+	 
     .EXAMPLE
     Get-EventsBySource
          
@@ -34,10 +44,23 @@
     VERSION HISTORY
     0.3.1 - 2015-07-03 - Support for time span corrected, the first version published on GitHub
     0.3.2 - 2015-07-05 - Help updated, function corrected
+    0.3.3 - 2015-08-25 - Help updated, to do updated
     
 
     TODO
     - help update needed
+    - handle situation like
+    
+    PS > [Array]$FilterHashTable = @{ "Logname" = "Application"; "Id" = 900; "ProviderName" = "Microsoft-Windows-Security-SPP" }
+    PS > Get-WinEvent -FilterHashtable $FilterHashTable
+    
+    PS > Get-WinEvent -FilterHashtable $FilterHashTable
+    Get-WinEvent : The specified providers do not write events to any of the specified logs.
+    At line:1 char:1
+    + Get-WinEvent -FilterHashtable $FilterHashTable
+    + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Get-WinEvent], Exception
+    + FullyQualifiedErrorId : LogsAndProvidersDontOverlap,Microsoft.PowerShell.Commands.GetWinEventCommand
     
         
     LICENSE
