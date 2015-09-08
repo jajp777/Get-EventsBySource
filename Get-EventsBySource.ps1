@@ -40,11 +40,12 @@
     .NOTES
    
     AUTHOR: Wojciech Sciesinski, wojciech.sciesinski@atos.net
-    KEYWORDS: Windows, Event logs
+    KEYWORDS: Windows, Event logs, PowerShell
     VERSION HISTORY
     0.3.1 - 2015-07-03 - Support for time span corrected, the first version published on GitHub
     0.3.2 - 2015-07-05 - Help updated, function corrected
     0.3.3 - 2015-08-25 - Help updated, to do updated
+    0.4.0 - 2015-09-08 - Code reformated, Added support for more than one event id, minor update
     
 
     TODO
@@ -77,58 +78,47 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>
    
 #>
-
-[CmdletBinding()] 
-
-param(
-	[parameter(mandatory=$true)]
-	[String]$ComputerName,
-	
-	[parameter(mandatory=$true)]
-	[String]$LogName,
-	
-	[parameter(mandatory=$true)]
-	[String]$ProviderName,
-	
-	[parameter(mandatory=$true)]
-	[Int]$EventID,
-	
-	[parameter(mandatory=$false,ParameterSetName="StartEndTime")]
-	[DateTime]$StartTime,
-	
-	[parameter(mandatory=$false,ParameterSetName="StartEndTime")]
-	[DateTime]$EndTime,
-	
-	[parameter(mandatory=$false,ParameterSetName="ForLast")]
-	[int]$ForLastTimeSpan=24,
-	
-	[parameter(mandatory=$false,ParameterSetName="ForLast")]
-	[ValidateSet("minutes","hours","days")]
-	[string]$ForLastTimeUnit="hours",
-
-    [parameter(mandatory=$false)]
-    [Bool]$ConcatenateMessageLines=$true,
-
-    [parameter(mandatory=$false)]
-    [String]$ConcatenatedLinesSeparator="^",
-
-    [parameter(mandatory=$false)]
-    [Int]$MessageCharsAmount=-1
-
-)
-
-BEGIN {
-
-    $Results=@()
-
-}
-
-PROCESS {
-
+    
+    [CmdletBinding()]
+    param (
+        [parameter(mandatory = $true)]
+        [String]$ComputerName,
+        [parameter(mandatory = $true)]
+        [String]$LogName,
+        [parameter(mandatory = $true)]
+        [String]$ProviderName,
+        [parameter(mandatory = $true)]
+        [Int[]]$EventID,
+        [parameter(mandatory = $false, ParameterSetName = "StartEndTime")]
+        [DateTime]$StartTime,
+        [parameter(mandatory = $false, ParameterSetName = "StartEndTime")]
+        [DateTime]$EndTime,
+        [parameter(mandatory = $false, ParameterSetName = "ForLast")]
+        [int]$ForLastTimeSpan = 24,
+        [parameter(mandatory = $false, ParameterSetName = "ForLast")]
+        [ValidateSet("minutes", "hours", "days")]
+        [string]$ForLastTimeUnit = "hours",
+        [parameter(mandatory = $false)]
+        [Bool]$ConcatenateMessageLines = $true,
+        [parameter(mandatory = $false)]
+        [String]$ConcatenatedLinesSeparator = "^",
+        [parameter(mandatory = $false)]
+        [Int]$MessageCharsAmount = -1
+        
+    )
+    
+    BEGIN {
+        
+        $Results = @()
+        
+    }
+    
+    PROCESS {
+        
         $SkipServer = $false
         
         Try {
-
+            
             Write-Verbose -Message "Checking logs on the server $ComputerName"
             
             If ($StartTime -ne $null -or $EndTime -ne $null) {
@@ -136,7 +126,7 @@ PROCESS {
                 If ($StartTime -and $EndTime) {
                     
                     [Array]$FilterHashTable = @{ "Logname" = $LogName; "Id" = $EventID; "ProviderName" = $ProviderName; "StartTime" = $StartTime; "EndTime" = $EndTime }
-                                        
+                    
                 }
                 Elseif ($EndTime) {
                     
@@ -158,25 +148,25 @@ PROCESS {
                 switch ($ForLastTimeUnit) {
                     "minutes" {
                         
-                        $StartTime = $EndTime.AddMinutes(-$ForLastTimeSpan)
+                        $StartTime = $EndTime.AddMinutes(- $ForLastTimeSpan)
                         
                     }
                     "hours" {
                         
-                        $StartTime = $EndTime.AddHours(-$ForLastTimeSpan)
+                        $StartTime = $EndTime.AddHours(- $ForLastTimeSpan)
                         
                     }
                     "days" {
                         
-                        $StartTime = $EndTime.AddDays(-$ForLastTimeSpan)
+                        $StartTime = $EndTime.AddDays(- $ForLastTimeSpan)
                         
                     }
                     
                 }
                 
                 [Array]$FilterHashTable = @{ "Logname" = $LogName; "Id" = $EventID; "ProviderName" = $ProviderName; "StartTime" = $StartTime; "EndTime" = $EndTime }
-            
-            
+                
+                
             }
             
             Else {
@@ -185,78 +175,72 @@ PROCESS {
                 
             }
             
-            $Events = $(Get-WinEvent -ComputerName $ComputerName -FilterHashtable $FilterHashTable -ErrorAction 'SilentlyContinue' | Select-Object -Property MachineName,Providername,ID,TimeCreated,Message)
-
-        }
-
-        Catch {
-
-            Write-Verbose -Message "Computer $ComputerName not accessible or error with access to $LogName event log."
-
-			[Bool]$SkipServer = $true
-
-		}
-
-        Finally {
-
-
-			If ( -not $SkipServer ) {
+            $Events = $(Get-WinEvent -ComputerName $ComputerName -FilterHashtable $FilterHashTable -ErrorAction 'SilentlyContinue' | Select-Object -Property MachineName, Providername, ID, TimeCreated, Message)
             
-
-				$Found = $( $Events | Measure-Object).Count
-                
-                If ($Found -ne 0) {
-                    
-                    [String]$MessageText = "For the computer $ComputerName events $Found found"
-
-					Write-Verbose -Message $MessageText
-
-					$Events | ForEach  { 
-	
-						$Result = New-Object -TypeName PSObject		
-						$Result | Add-Member -type NoteProperty -name ComputerName -value $_.MachineName
-						$Result | Add-Member -type NoteProperty -name Source -value $_.Providername
-						$Result | Add-Member -type NoteProperty -name EventID -Value $_.ID
-						$Result | Add-Member -type NoteProperty -name TimeGenerated -Value $_.TimeCreated
-         
-						$MessageLength = $($_.Message).Length
-	
-						If ( ($MessageCharsAmount -eq -1) -or $MessageCharsAmount -gt $MessageLength ) {
-
-							$MessageCharsAmount = $MessageLength
-
-						}
- 	
-						if ( $ConcatenateMessageLines ) {
-						
-							$MessageFields = $_.Message.Substring(0,$MessageCharsAmount-1).Replace("`r`n",$ConcatenatedLinesSeparator)
-
-							$Result | Add-Member -type NoteProperty -name Message -Value $MessageFields
-
-						}
- 						else {
-
-							$Result | Add-Member -type NoteProperty -name Message -Value $_.Message.Substring(0,$MessageCharsAmount-1)
-
-						}
-
-						$Results+=$Result
-
-					}
-			
-				}
-	    
-			}
-
         }
-
-}
-
-
-END {
-
-    Return $Results
-
+        
+        Catch {
+            
+            Write-Verbose -Message "Computer $ComputerName not accessible or error with access to $LogName event log."
+            
+            Continue
+            
+        }
+        
+        Finally {
+            
+            $Found = $($Events | Measure-Object).Count
+            
+            If ($Found -ne 0) {
+                
+                [String]$MessageText = "For the computer $ComputerName events $Found found"
+                
+                Write-Verbose -Message $MessageText
+                
+                $Events | ForEach  {
+                    
+                    $Result = New-Object -TypeName PSObject
+                    $Result | Add-Member -type NoteProperty -name ComputerName -value $_.MachineName
+                    $Result | Add-Member -type NoteProperty -name Source -value $_.Providername
+                    $Result | Add-Member -type NoteProperty -name EventID -Value $_.ID
+                    $Result | Add-Member -type NoteProperty -name TimeGenerated -Value $_.TimeCreated
+                    
+                    $MessageLength = $($_.Message).Length
+                    
+                    If (($MessageCharsAmount -eq -1) -or $MessageCharsAmount -gt $MessageLength) {
+                        
+                        $MessageCharsAmount = $MessageLength
+                        
+                    }
+                    
+                    if ($ConcatenateMessageLines) {
+                        
+                        $MessageFields = $_.Message.Substring(0, $MessageCharsAmount - 1).Replace("`r`n", $ConcatenatedLinesSeparator)
+                        
+                        $Result | Add-Member -type NoteProperty -name Message -Value $MessageFields
+                        
+                    }
+                    else {
+                        
+                        $Result | Add-Member -type NoteProperty -name Message -Value $_.Message.Substring(0, $MessageCharsAmount - 1)
+                        
+                    }
+                    
+                    $Results += $Result
+                    
+                }
+                
+            }
+            
+        }
+        
     }
-
+    
+    
+    END {
+        
+        Return $Results
+        
+    }
+    
 }
