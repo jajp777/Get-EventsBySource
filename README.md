@@ -76,12 +76,12 @@ AUTHOR's PROFILE: https://www.linkedin.com/in/sciesinskiwojciech
 KEYWORDS: Windows, Event logs, PowerShell
 
 ##VERSION HISTORY
-0.3.1 - 2015-07-03 - Support for time span corrected, the first version published on GitHub
-0.3.2 - 2015-07-05 - Help updated, function corrected
-0.3.3 - 2015-08-25 - Help updated, to do updated
-0.4.0 - 2015-09-08 - Code reformated, Added support for more than one event id, minor update
-0.5.0 - 2015-10-19 - Code corrected based on PSScriptAnalyzer 1.1.0 output, support for more than logs (by name) added, help partially updated
- 
+- 0.3.1 - 2015-07-03 - Support for time span corrected, the first version published on GitHub
+- 0.3.2 - 2015-07-05 - Help updated, function corrected
+- 0.3.3 - 2015-08-25 - Help updated, to do updated
+- 0.4.0 - 2015-09-08 - Code reformated, Added support for more than one event id, minor update
+- 0.5.0 - 2015-10-19 - Code corrected based on PSScriptAnalyzer 1.1.0 output, support for more than logs (by name) added, help partially updated
+- 0.6.0 - 2016-09-13 - Added support to get logs by event level/severity, the license changed to MIT
 
 ##TODO
 - handle situation like
@@ -99,14 +99,6 @@ At line:1 char:1
 
 
 ##LICENSE
-Copyright (C) 2015 Wojciech Sciesinski
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>
+Copyright (c) 2016 Wojciech Sciesinski  
+This function is licensed under The MIT License (MIT)  
+Full license text: https://opensource.org/licenses/MIT  
